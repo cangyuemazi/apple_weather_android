@@ -15,7 +15,7 @@ import '../widgets/search_bar_widget.dart';
 
 /// 主屏幕
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(
                 Icons.refresh,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
               onPressed: provider.isRefreshing
                   ? null
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return RefreshIndicator(
           onRefresh: () => provider.refreshWeather(),
           color: Colors.white,
-          backgroundColor: Colors.white.withOpacity(0.2),
+          backgroundColor: Colors.white.withValues(alpha: 0.2),
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -169,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.3),
+                    color: Colors.red.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(

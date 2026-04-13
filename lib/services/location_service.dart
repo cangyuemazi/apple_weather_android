@@ -1,6 +1,8 @@
 /// 定位服务
 /// 封装 geolocator 和 permission_handler,提供统一的定位权限与位置获取接口
 
+library location_service;
+
 import 'package:geolocator/geolocator.dart';
 
 /// 定位权限状态

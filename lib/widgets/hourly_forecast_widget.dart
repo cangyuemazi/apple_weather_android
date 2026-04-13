@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
-import '../utils/date_utils.dart';
 import '../utils/weather_utils.dart';
 import '../utils/theme_utils.dart';
 
@@ -8,9 +7,9 @@ class HourlyForecastWidget extends StatelessWidget {
   final List<HourlyForecast> hourlyForecasts;
 
   const HourlyForecastWidget({
-    Key? key,
+    super.key,
     required this.hourlyForecasts,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +21,15 @@ class HourlyForecastWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             '逐小时预报',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -58,9 +57,8 @@ class _HourlyItem extends StatelessWidget {
   final HourlyForecast forecast;
 
   const _HourlyItem({
-    Key? key,
     required this.forecast,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +70,7 @@ class _HourlyItem extends StatelessWidget {
         children: [
           // 时间
           Text(
-            AppDateUtils.formatHour(forecast.time),
+            forecast.time,
             style: const TextStyle(
               fontSize: 13,
               color: Colors.white70,
@@ -84,7 +82,7 @@ class _HourlyItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(

@@ -10,12 +10,12 @@ class AirQualityCard extends StatelessWidget {
   final VoidCallback? onRetry;
 
   const AirQualityCard({
-    Key? key,
+    super.key,
     this.data,
     this.isLoading = false,
     this.errorMessage,
     this.onRetry,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class AirQualityCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: Column(
@@ -64,7 +64,7 @@ class AirQualityCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: cardColor.withOpacity(0.3),
+                  color: cardColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -110,7 +110,7 @@ class AirQualityCard extends StatelessWidget {
                         '主污染物: ${data.primaryPollutant}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -173,7 +173,7 @@ class AirQualityCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: const Center(
@@ -193,7 +193,7 @@ class AirQualityCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: Column(
@@ -252,18 +252,17 @@ class _PollutantItem extends StatelessWidget {
   final String unit;
 
   const _PollutantItem({
-    Key? key,
     required this.label,
     required this.value,
     required this.unit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -273,7 +272,7 @@ class _PollutantItem extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 2),
@@ -289,7 +288,7 @@ class _PollutantItem extends StatelessWidget {
             unit,
             style: TextStyle(
               fontSize: 9,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
             ),
           ),
         ],

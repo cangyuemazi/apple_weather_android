@@ -2,6 +2,8 @@
 /// 基于 Open-Meteo Geocoding API 返回结构映射
 
 /// 城市搜索结果
+library city_search_result;
+
 class CitySearchResult {
   /// 城市名称
   final String name;

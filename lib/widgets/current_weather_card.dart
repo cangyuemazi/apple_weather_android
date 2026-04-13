@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../utils/date_utils.dart';
 import '../utils/theme_utils.dart';
-import '../utils/constants.dart';
 import '../utils/weather_utils.dart' as weather_utils;
 
 /// 当前天气卡片
@@ -10,9 +9,9 @@ class CurrentWeatherCard extends StatelessWidget {
   final WeatherData weatherData;
 
   const CurrentWeatherCard({
-    Key? key,
+    super.key,
     required this.weatherData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +26,11 @@ class CurrentWeatherCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

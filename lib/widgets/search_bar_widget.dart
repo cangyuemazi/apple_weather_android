@@ -9,12 +9,12 @@ class SearchBarWidget extends StatefulWidget {
   final bool isSearching;
 
   const SearchBarWidget({
-    Key? key,
+    super.key,
     required this.onSearch,
     required this.onSelect,
     required this.searchResults,
     this.isSearching = false,
-  }) : super(key: key);
+  });
 
   @override
   State<SearchBarWidget> createState() => _SearchBarWidgetState();
@@ -70,11 +70,11 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             child: Container(
               constraints: const BoxConstraints(maxHeight: 300),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -140,16 +140,18 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: '搜索城市...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
               prefixIcon: Icon(
                 Icons.search,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
               suffixIcon: _controller.text.isNotEmpty
                   ? IconButton(
                       icon: Icon(
                         Icons.clear,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                       onPressed: () {
                         _controller.clear();
@@ -158,23 +160,23 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                     )
                   : null,
               filled: true,
-              fillColor: Colors.white.withOpacity(0.15),
+              fillColor: Colors.white.withValues(alpha: 0.15),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(

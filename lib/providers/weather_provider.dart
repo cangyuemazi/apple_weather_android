@@ -1,6 +1,8 @@
 /// 天气 Provider
 /// 状态管理: 使用 ChangeNotifier 管理天气数据、加载状态、搜索状态等
 
+library weather_provider;
+
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart' show ChangeNotifier;
@@ -64,10 +66,8 @@ class WeatherProvider extends ChangeNotifier {
   String? _lastSearchedCity;
 
   /// 上次获取的纬度
-  double? _lastLatitude;
 
   /// 上次获取的经度
-  double? _lastLongitude;
 
   /// 天气请求序列号，用于避免旧数据回写
   int _weatherRequestId = 0;
@@ -219,10 +219,6 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 设置加载状态
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
 
   /// 设置刷新状态
   void _setRefreshing(bool refreshing) {
@@ -231,16 +227,8 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 设置搜索状态
-  void _setSearching(bool searching) {
-    _isSearching = searching;
-    notifyListeners();
-  }
 
   /// 设置错误信息
-  void _setError(String? error) {
-    _errorMessage = error;
-    notifyListeners();
-  }
 
   /// 更新天气数据
   void _updateWeather(WeatherData data, {bool isUsingLocation = false}) {
@@ -348,8 +336,6 @@ class WeatherProvider extends ChangeNotifier {
           'WeatherProvider: 获取定位成功 - lat:${position.latitude}, lon:${position.longitude}');
 
       // 2. 记录经纬度
-      _lastLatitude = position.latitude;
-      _lastLongitude = position.longitude;
       _currentLocationName = '当前位置';
       _isUsingCurrentLocation = true;
 
@@ -381,7 +367,7 @@ class WeatherProvider extends ChangeNotifier {
         _isLoading = false;
       }
       debugPrint(
-          'WeatherProvider: 加载完成 - hasData: ${hasData}, hasError: ${hasError}');
+          'WeatherProvider: 加载完成 - hasData: $hasData, hasError: $hasError');
       notifyListeners();
     }
   }
@@ -450,7 +436,7 @@ class WeatherProvider extends ChangeNotifier {
         _isLoading = false;
       }
       debugPrint(
-          'WeatherProvider: 加载完成 - hasData: ${hasData}, hasError: ${hasError}');
+          'WeatherProvider: 加载完成 - hasData: $hasData, hasError: $hasError');
       notifyListeners();
     }
   }

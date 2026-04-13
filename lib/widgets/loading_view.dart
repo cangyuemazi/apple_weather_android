@@ -5,9 +5,9 @@ class LoadingView extends StatelessWidget {
   final String message;
 
   const LoadingView({
-    Key? key,
+    super.key,
     this.message = '加载中...',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +38,10 @@ class SkeletonLoader extends StatelessWidget {
   final double width;
 
   const SkeletonLoader({
-    Key? key,
+    super.key,
     this.height = 20,
     this.width = double.infinity,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class SkeletonLoader extends StatelessWidget {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(

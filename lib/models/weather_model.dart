@@ -1,6 +1,8 @@
 /// 天气数据模型
 /// 基于 Open-Meteo API 返回结构映射
 
+library weather_model;
+
 import '../utils/weather_utils.dart';
 import '../utils/constants.dart';
 import 'air_quality_model.dart';
@@ -169,7 +171,7 @@ class WeatherData {
 
     // 取未来 N 小时 (根据配置)
     final forecasts = <HourlyForecast>[];
-    final count = AppConstants.hourlyForecastCount;
+    const count = AppConstants.hourlyForecastCount;
     for (int i = currentIndex;
         i < currentIndex + count && i < times.length;
         i++) {

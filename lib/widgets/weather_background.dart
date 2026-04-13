@@ -10,10 +10,10 @@ class WeatherBackground extends StatelessWidget {
   final Widget child;
 
   const WeatherBackground({
-    Key? key,
+    super.key,
     required this.weatherData,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

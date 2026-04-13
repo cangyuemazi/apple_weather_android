@@ -9,9 +9,9 @@ class WeatherDetailsGrid extends StatelessWidget {
   final WeatherData weatherData;
 
   const WeatherDetailsGrid({
-    Key? key,
+    super.key,
     required this.weatherData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +19,15 @@ class WeatherDetailsGrid extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             '天气详情',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -86,13 +86,13 @@ class WeatherDetailsGrid extends StatelessWidget {
               _DetailItem(
                 icon: Icons.wb_sunny_outlined,
                 label: '日出',
-                value: AppDateUtils.formatSunrise(weatherData.sunrise),
+                value: weatherData.sunrise,
                 description: '今日日出',
               ),
               _DetailItem(
                 icon: Icons.nights_stay,
                 label: '日落',
-                value: AppDateUtils.formatSunset(weatherData.sunset),
+                value: weatherData.sunset,
                 description: '今日日落',
               ),
             ],
@@ -110,19 +110,18 @@ class _DetailItem extends StatelessWidget {
   final String description;
 
   const _DetailItem({
-    Key? key,
     required this.icon,
     required this.label,
     required this.value,
     required this.description,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -133,7 +132,7 @@ class _DetailItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 size: 18,
               ),
               const SizedBox(width: 6),
@@ -141,7 +140,7 @@ class _DetailItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -158,7 +157,7 @@ class _DetailItem extends StatelessWidget {
             description,
             style: TextStyle(
               fontSize: 10,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

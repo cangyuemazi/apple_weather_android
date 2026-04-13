@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
-import '../utils/date_utils.dart';
 import '../utils/weather_utils.dart';
 import '../utils/theme_utils.dart';
 
@@ -9,9 +8,9 @@ class DailyForecastWidget extends StatelessWidget {
   final List<DailyForecast> dailyForecasts;
 
   const DailyForecastWidget({
-    Key? key,
+    super.key,
     required this.dailyForecasts,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +30,15 @@ class DailyForecastWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: ThemeUtils.glassCardBorder(),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             '7日预报',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -75,11 +74,10 @@ class _DailyItem extends StatelessWidget {
   final double globalMax;
 
   const _DailyItem({
-    Key? key,
     required this.forecast,
     required this.globalMin,
     required this.globalMax,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +89,7 @@ class _DailyItem extends StatelessWidget {
           SizedBox(
             width: 80,
             child: Text(
-              AppDateUtils.getWeekday(forecast.date),
+              forecast.date,
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white,
@@ -154,12 +152,11 @@ class _TemperatureBar extends StatelessWidget {
   final double globalMax;
 
   const _TemperatureBar({
-    Key? key,
     required this.min,
     required this.max,
     required this.globalMin,
     required this.globalMax,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +182,7 @@ class _TemperatureBar extends StatelessWidget {
           // 背景条
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(3),
             ),
           ),

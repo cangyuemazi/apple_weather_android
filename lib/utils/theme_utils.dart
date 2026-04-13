@@ -56,7 +56,6 @@ class ThemeUtils {
           Color(0xFF3D566E),
         ];
       case WeatherBackgroundType.unknown:
-      default:
         // 默认蓝色渐变
         return const [
           Color(0xFF4A90D9),
@@ -73,10 +72,10 @@ class ThemeUtils {
   }) {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(borderRadius),
-      color: Colors.white.withOpacity(0.15),
+      color: Colors.white.withValues(alpha: 0.15),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.1),
+          color: Colors.black.withValues(alpha: 0.1),
           blurRadius: blur,
           offset: const Offset(0, 4),
         ),
@@ -87,7 +86,7 @@ class ThemeUtils {
   /// 玻璃拟态边框
   static BoxBorder glassCardBorder() {
     return Border.all(
-      color: Colors.white.withOpacity(0.3),
+      color: Colors.white.withValues(alpha: 0.3),
       width: 1.5,
     );
   }
@@ -110,14 +109,14 @@ class ThemeUtils {
       case WeatherBackgroundType.clearNight:
       case WeatherBackgroundType.rainy:
       case WeatherBackgroundType.thunderstorm:
-        return Colors.white.withOpacity(0.8);
+        return Colors.white.withValues(alpha: 0.8);
       default:
-        return Colors.white.withOpacity(0.85);
+        return Colors.white.withValues(alpha: 0.85);
     }
   }
 
   /// 获取图标颜色
   static Color getIconColor(WeatherBackgroundType type) {
-    return Colors.white.withOpacity(0.9);
+    return Colors.white.withValues(alpha: 0.9);
   }
 }

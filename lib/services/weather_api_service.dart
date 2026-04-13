@@ -1,6 +1,8 @@
 /// 天气 API 服务
 /// 封装 Open-Meteo API 调用逻辑
 
+library weather_api_service;
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/weather_model.dart';
@@ -29,7 +31,7 @@ class CityNotFoundException extends WeatherApiException {
 
 /// 无效响应异常
 class InvalidResponseException extends WeatherApiException {
-  InvalidResponseException(String message) : super(message);
+  InvalidResponseException(super.message);
 }
 
 /// 天气 API 服务类

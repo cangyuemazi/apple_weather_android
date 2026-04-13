@@ -2,6 +2,8 @@
 /// 基于 Open-Meteo Air Quality API 返回结构映射
 
 /// 空气质量数据
+library air_quality_model;
+
 class AirQualityData {
   /// AQI 数值
   final int aqiValue;

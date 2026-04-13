@@ -7,11 +7,11 @@ class ErrorView extends StatelessWidget {
   final IconData icon;
 
   const ErrorView({
-    Key? key,
+    super.key,
     required this.message,
     this.onRetry,
     this.icon = Icons.error_outline,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class ErrorView extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 16),
             Text(
@@ -32,7 +32,7 @@ class ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             if (onRetry != null) ...[
@@ -42,7 +42,7 @@ class ErrorView extends StatelessWidget {
                 icon: const Icon(Icons.refresh),
                 label: const Text('重试'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -67,10 +67,10 @@ class EmptyView extends StatelessWidget {
   final IconData icon;
 
   const EmptyView({
-    Key? key,
+    super.key,
     this.message = '暂无数据',
     this.icon = Icons.inbox_outlined,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +81,14 @@ class EmptyView extends StatelessWidget {
           Icon(
             icon,
             size: 64,
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             message,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -103,10 +103,10 @@ class LocationPermissionView extends StatelessWidget {
   final VoidCallback onRetry;
 
   const LocationPermissionView({
-    Key? key,
+    super.key,
     required this.onOpenSettings,
     required this.onRetry,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +148,7 @@ class LocationPermissionView extends StatelessWidget {
                   icon: const Icon(Icons.settings),
                   label: const Text('去设置'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -164,7 +164,7 @@ class LocationPermissionView extends StatelessWidget {
                   icon: const Icon(Icons.refresh),
                   label: const Text('重试'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
