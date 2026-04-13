@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../models/weather_model.dart';
 import '../models/city_search_result.dart';
 import '../models/air_quality_model.dart';
+import '../utils/constants.dart';
 
 /// 天气 API 异常基类
 class WeatherApiException implements Exception {
@@ -23,8 +24,7 @@ class CityNotFoundException extends WeatherApiException {
   /// 搜索关键词
   final String keyword;
 
-  CityNotFoundException(this.keyword)
-      : super('未找到城市: $keyword');
+  CityNotFoundException(this.keyword) : super('未找到城市: $keyword');
 }
 
 /// 无效响应异常
@@ -43,7 +43,8 @@ class WeatherApiService {
   final Duration timeout;
 
   /// 地理编码 API 基础 URL
-  static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1';
+  static const String _geocodingBaseUrl =
+      'https://geocoding-api.open-meteo.com/v1';
 
   /// 天气预报 API 基础 URL
   static const String _weatherBaseUrl = 'https://api.open-meteo.com/v1';
@@ -78,9 +79,7 @@ class WeatherApiService {
       final uri = _buildGeocodingUri(keyword.trim());
 
       // 发送 HTTP GET 请求
-      final response = await client
-          .get(uri)
-          .timeout(timeout);
+      final response = await client.get(uri).timeout(timeout);
 
       // 检查 HTTP 状态码
       if (response.statusCode != 200) {
@@ -106,16 +105,14 @@ class WeatherApiService {
 
       // 解析为 CitySearchResult 列表
       return resultsList
-          .map((json) => CitySearchResult.fromJson(json as Map<String, dynamic>))
+          .map(
+              (json) => CitySearchResult.fromJson(json as Map<String, dynamic>))
           .toList();
     } on WeatherApiException {
       rethrow;
     } on FormatException catch (e) {
       throw InvalidResponseException('JSON 解析失败: ${e.message}');
     } catch (e) {
-      if (e is WeatherApiException) {
-        rethrow;
-      }
       throw WeatherApiException('搜索城市时发生错误: $e');
     }
   }
@@ -162,9 +159,6 @@ class WeatherApiService {
     } on WeatherApiException {
       rethrow;
     } catch (e) {
-      if (e is WeatherApiException) {
-        rethrow;
-      }
       throw WeatherApiException('获取城市天气失败: $e');
     }
   }
@@ -191,9 +185,7 @@ class WeatherApiService {
       final uri = _buildForecastUri(latitude, longitude);
 
       // 发送 HTTP GET 请求
-      final response = await client
-          .get(uri)
-          .timeout(timeout);
+      final response = await client.get(uri).timeout(timeout);
 
       // 检查 HTTP 状态码
       if (response.statusCode != 200) {
@@ -220,9 +212,6 @@ class WeatherApiService {
     } on FormatException catch (e) {
       throw InvalidResponseException('JSON 解析失败: ${e.message}');
     } catch (e) {
-      if (e is WeatherApiException) {
-        rethrow;
-      }
       throw WeatherApiException('获取天气数据时发生错误: $e');
     }
   }
@@ -235,7 +224,7 @@ class WeatherApiService {
     return Uri.parse('$_geocodingBaseUrl/search').replace(
       queryParameters: {
         'name': keyword,
-        'count': '10',
+        'count': AppConstants.searchResultCount.toString(),
         'language': 'zh',
         'format': 'json',
       },
@@ -381,9 +370,6 @@ class WeatherApiService {
     } on FormatException catch (e) {
       throw InvalidResponseException('JSON 解析失败: ${e.message}');
     } catch (e) {
-      if (e is WeatherApiException) {
-        rethrow;
-      }
       throw WeatherApiException('获取空气质量数据时发生错误: $e');
     }
   }

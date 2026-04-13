@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 
 /// 日期工具类
 class AppDateUtils {
-  /// 格式化日期为年月日
   static String formatDate(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
@@ -12,28 +11,25 @@ class AppDateUtils {
     }
   }
 
-  /// 获取星期几
   static String getWeekday(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
-      final weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      return weekdays[dateTime.weekday % 7];
+      final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      return weekdays[dateTime.weekday - 1];
     } catch (e) {
       return '';
     }
   }
 
-  /// 格式化时间为小时分钟
   static String formatTime(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('HH:mm').format(dateTime);
     } catch (e) {
-      return dateTimeStr;
+      return '--:--';
     }
   }
 
-  /// 格式化时间为小时
   static String formatHour(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
@@ -43,7 +39,20 @@ class AppDateUtils {
     }
   }
 
-  /// 获取相对时间描述
+  static String formatDailyLabel(String dateStr, {int index = 0}) {
+    if (index == 0) {
+      return '今天';
+    }
+
+    try {
+      final dateTime = DateTime.parse(dateStr);
+      final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      return weekdays[dateTime.weekday - 1];
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   static String getRelativeTime(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
@@ -68,8 +77,12 @@ class AppDateUtils {
     }
   }
 
-  /// 格式化日出时间
-  static String formatSunrise(String dateTimeStr) {
+  static String formatHourLabel(String dateTimeStr,
+      {bool currentIndex = false}) {
+    if (currentIndex) {
+      return 'Now';
+    }
+
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('HH:mm').format(dateTime);
@@ -78,30 +91,25 @@ class AppDateUtils {
     }
   }
 
-  /// 格式化日落时间
+  static String formatSunrise(String dateTimeStr) {
+    return formatTime(dateTimeStr);
+  }
+
   static String formatSunset(String dateTimeStr) {
-    try {
-      final dateTime = DateTime.parse(dateTimeStr);
-      return DateFormat('HH:mm').format(dateTime);
-    } catch (e) {
-      return dateTimeStr;
-    }
+    return formatTime(dateTimeStr);
   }
 }
 
 /// 温度工具类
 class TemperatureUtils {
-  /// 格式化温度
   static String formatTemperature(double temperature) {
     return '${temperature.round()}°';
   }
 
-  /// 格式化温度范围
   static String formatTemperatureRange(double min, double max) {
     return '${min.round()}° / ${max.round()}°';
   }
 
-  /// 摄氏度转华氏度
   static double celsiusToFahrenheit(double celsius) {
     return celsius * 9 / 5 + 32;
   }
@@ -109,12 +117,10 @@ class TemperatureUtils {
 
 /// 风速工具类
 class WindUtils {
-  /// 格式化风速
   static String formatWindSpeed(double windSpeed) {
     return '${windSpeed.round()} km/h';
   }
 
-  /// 风力等级
   static String getWindLevel(double windSpeed) {
     if (windSpeed < 5) {
       return '0级';
@@ -132,9 +138,7 @@ class WindUtils {
 
 /// 能见度工具类
 class VisibilityUtils {
-  /// 格式化能见度
   static String formatVisibility(double visibility) {
-    // visibility 单位为米
     if (visibility < 1000) {
       return '${visibility.round()}m';
     } else {

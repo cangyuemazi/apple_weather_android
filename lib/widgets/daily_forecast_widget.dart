@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../utils/date_utils.dart';
+import '../utils/weather_utils.dart';
 import '../utils/theme_utils.dart';
 
 /// 逐日预报组件
@@ -99,7 +100,7 @@ class _DailyItem extends StatelessWidget {
           ),
           // 天气图标
           Icon(
-            _getWeatherIcon(forecast.conditionCode),
+            WeatherUtils.getWeatherIcon(forecast.conditionCode),
             color: Colors.white,
             size: 24,
           ),
@@ -143,15 +144,6 @@ class _DailyItem extends StatelessWidget {
       ),
     );
   }
-
-  IconData _getWeatherIcon(int code) {
-    if (code == 0) return Icons.wb_sunny;
-    if (code >= 1 && code <= 3) return Icons.cloud;
-    if (code >= 51 && code <= 65) return Icons.water_drop;
-    if (code >= 71 && code <= 75) return Icons.ac_unit;
-    if (code >= 95) return Icons.thunderstorm;
-    return Icons.cloud;
-  }
 }
 
 /// 温度条
@@ -173,7 +165,14 @@ class _TemperatureBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalRange = globalMax - globalMin;
     if (totalRange == 0) {
-      return const SizedBox(height: 6);
+      return Container(
+        height: 6,
+        width: 20,
+        decoration: BoxDecoration(
+          color: Colors.blue.shade300,
+          borderRadius: BorderRadius.circular(3),
+        ),
+      );
     }
 
     final leftPadding = (min - globalMin) / totalRange;
@@ -193,7 +192,8 @@ class _TemperatureBar extends StatelessWidget {
           // 温度范围条
           Positioned(
             left: leftPadding.clamp(0.0, 1.0) * 100,
-            right: (1.0 - width.clamp(0.0, 1.0) - leftPadding.clamp(0.0, 1.0)) * 100,
+            right: (1.0 - width.clamp(0.0, 1.0) - leftPadding.clamp(0.0, 1.0)) *
+                100,
             child: Container(
               height: 6,
               decoration: BoxDecoration(

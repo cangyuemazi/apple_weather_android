@@ -39,10 +39,10 @@ class LocationPermissionDeniedException extends LocationServiceException {
 }
 
 /// 定位权限被永久拒绝异常
-class LocationPermissionPermanentlyDeniedException extends LocationServiceException {
+class LocationPermissionPermanentlyDeniedException
+    extends LocationServiceException {
   LocationPermissionPermanentlyDeniedException([String? message])
-      : super(
-            message ?? '定位权限被永久拒绝,请在系统设置中手动开启此应用的定位权限');
+      : super(message ?? '定位权限被永久拒绝,请在系统设置中手动开启此应用的定位权限');
 }
 
 /// 定位服务未启用异常
@@ -155,7 +155,6 @@ class LocationService {
     } on LocationServiceException {
       rethrow;
     } catch (e) {
-      // 捕获未知异常并转为定位异常
       throw LocationServiceException('请求定位权限失败: $e');
     }
   }
@@ -191,9 +190,6 @@ class LocationService {
     } on LocationServiceException {
       rethrow;
     } catch (e) {
-      if (e is LocationServiceException) {
-        rethrow;
-      }
       throw LocationServiceException('获取当前位置失败: $e');
     }
   }

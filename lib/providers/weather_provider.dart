@@ -8,6 +8,7 @@ import '../models/weather_model.dart';
 import '../models/city_search_result.dart';
 import '../services/weather_api_service.dart';
 import '../services/location_service.dart';
+import '../utils/constants.dart';
 
 /// 天气数据 Provider
 ///
@@ -68,6 +69,12 @@ class WeatherProvider extends ChangeNotifier {
   /// 上次获取的经度
   double? _lastLongitude;
 
+  /// 天气请求序列号，用于避免旧数据回写
+  int _weatherRequestId = 0;
+
+  /// 搜索请求序列号，用于避免旧结果覆盖
+  int _searchRequestId = 0;
+
   // ==================== Getters ====================
 
   /// 天气数据
@@ -111,37 +118,44 @@ class WeatherProvider extends ChangeNotifier {
   /// 加载默认城市(北京)
   ///
   /// 用于 Web 平台或定位失败时的降级方案
-  Future<void> _loadDefaultCity() async {
+  Future<void> _loadDefaultCity({bool showLoading = true}) async {
     debugPrint('WeatherProvider: 加载默认城市 - 北京');
 
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    final requestId = ++_weatherRequestId;
+
+    if (showLoading) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    } else {
+      _errorMessage = null;
+    }
 
     try {
-      // 使用北京的经纬度
-      const double defaultLatitude = 39.9042;
-      const double defaultLongitude = 116.4074;
-      const String defaultCity = '北京';
-
       final weatherData = await _weatherApiService.getWeatherByLocation(
-        defaultLatitude,
-        defaultLongitude,
-        locationName: defaultCity,
+        AppConstants.defaultLatitude,
+        AppConstants.defaultLongitude,
+        locationName: AppConstants.defaultCity,
       );
 
-      debugPrint('WeatherProvider: 默认城市加载成功 - $defaultCity');
+      debugPrint('WeatherProvider: 默认城市加载成功 - ${AppConstants.defaultCity}');
       _updateWeather(weatherData, isUsingLocation: false);
-      _lastSearchedCity = defaultCity;
+      _lastSearchedCity = AppConstants.defaultCity;
 
       // 异步加载空气质量
-      _loadAirQualityByCoordinates(defaultLatitude, defaultLongitude);
+      _loadAirQualityByCoordinates(
+        AppConstants.defaultLatitude,
+        AppConstants.defaultLongitude,
+        requestId: requestId,
+      );
     } catch (e) {
       debugPrint('WeatherProvider: 加载默认城市失败 - $e');
       _errorMessage = _mapErrorToMessage(e);
       notifyListeners();
     } finally {
-      _isLoading = false;
+      if (showLoading) {
+        _isLoading = false;
+      }
       debugPrint(
           'WeatherProvider: 加载完成 - hasData: $hasData, hasError: $hasError');
       notifyListeners();
@@ -151,10 +165,8 @@ class WeatherProvider extends ChangeNotifier {
   /// 通过经纬度加载空气质量数据
   ///
   /// 异步执行,不影响主流程
-  Future<void> _loadAirQualityByCoordinates(
-    double latitude,
-    double longitude,
-  ) async {
+  Future<void> _loadAirQualityByCoordinates(double latitude, double longitude,
+      {int? requestId}) async {
     try {
       debugPrint('WeatherProvider: 开始加载空气质量 - lat:$latitude, lon:$longitude');
       final airQuality = await _weatherApiService.getAirQualityByLocation(
@@ -163,6 +175,12 @@ class WeatherProvider extends ChangeNotifier {
       );
 
       debugPrint('WeatherProvider: 空气质量加载成功 - AQI: ${airQuality.aqiValue}');
+
+      // 检查请求是否过期，并且坐标是否匹配当前天气数据
+      if (requestId != null && requestId != _weatherRequestId) {
+        debugPrint('WeatherProvider: 空气质量请求已过期，丢弃结果');
+        return;
+      }
 
       // 更新 weatherData 中的空气质量字段
       if (_weatherData != null) {
@@ -178,7 +196,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 通过城市名加载空气质量数据
   ///
   /// 先搜索城市获取经纬度,再请求空气质量
-  Future<void> _loadAirQualityByCity(String cityName) async {
+  Future<void> _loadAirQualityByCity(String cityName, {int? requestId}) async {
     try {
       debugPrint('WeatherProvider: 开始加载城市空气质量 - $cityName');
       final searchResults = await _weatherApiService.searchCity(cityName);
@@ -189,7 +207,11 @@ class WeatherProvider extends ChangeNotifier {
       }
 
       final city = searchResults.first;
-      await _loadAirQualityByCoordinates(city.latitude, city.longitude);
+      await _loadAirQualityByCoordinates(
+        city.latitude,
+        city.longitude,
+        requestId: requestId,
+      );
     } catch (e) {
       debugPrint('WeatherProvider: 城市空气质量加载失败 - $e');
       // 不影响主流程
@@ -298,19 +320,25 @@ class WeatherProvider extends ChangeNotifier {
   /// - 不清空旧数据
   /// - 写入 errorMessage
   /// - 记录 isUsingCurrentLocation
-  Future<void> loadCurrentLocationWeather() async {
+  Future<void> loadCurrentLocationWeather({bool showLoading = true}) async {
     debugPrint('WeatherProvider: 开始加载当前位置天气...');
 
     // Web 平台不支持定位,自动加载默认城市
     if (kIsWeb) {
       debugPrint('WeatherProvider: Web 平台,自动加载默认城市');
-      await _loadDefaultCity();
+      await _loadDefaultCity(showLoading: showLoading);
       return;
     }
 
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    final requestId = ++_weatherRequestId;
+
+    if (showLoading) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    } else {
+      _errorMessage = null;
+    }
 
     try {
       // 1. 获取当前位置
@@ -334,18 +362,24 @@ class WeatherProvider extends ChangeNotifier {
 
       debugPrint('WeatherProvider: 获取天气成功 - ${weatherData.location}');
 
-      // 4. 异步加载空气质量 (不阻塞主流程)
-      _loadAirQualityByCoordinates(position.latitude, position.longitude);
-
-      // 5. 更新状态
+      // 4. 先更新天气，再异步加载 AQI，避免竞态导致 AQI 丢失
       _updateWeather(weatherData, isUsingLocation: true);
+
+      // 5. 异步加载空气质量 (不阻塞主流程)
+      _loadAirQualityByCoordinates(
+        position.latitude,
+        position.longitude,
+        requestId: requestId,
+      );
     } catch (e) {
       debugPrint('WeatherProvider: 获取定位天气失败 - $e');
       _errorMessage = _mapErrorToMessage(e);
       // 不清空旧数据,保留已有天气信息
       notifyListeners();
     } finally {
-      _isLoading = false;
+      if (showLoading) {
+        _isLoading = false;
+      }
       debugPrint(
           'WeatherProvider: 加载完成 - hasData: ${hasData}, hasError: ${hasError}');
       notifyListeners();
@@ -366,7 +400,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 失败时:
   /// - 不清空旧数据
   /// - 写入 errorMessage
-  Future<void> loadWeatherByCity(String city) async {
+  Future<void> loadWeatherByCity(String city, {bool showLoading = true}) async {
     debugPrint('WeatherProvider: 开始加载城市天气 - $city');
 
     // 1. 校验参数
@@ -376,21 +410,24 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    final requestId = ++_weatherRequestId;
+
+    if (showLoading) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    } else {
+      _errorMessage = null;
+    }
 
     try {
       // 2. 调用 API
-      final weatherData = await _weatherApiService.getWeatherByCity(city.trim());
+      final weatherData =
+          await _weatherApiService.getWeatherByCity(city.trim());
 
       debugPrint('WeatherProvider: 获取城市天气成功 - ${weatherData.location}');
 
-      // 3. 异步加载空气质量 (不阻塞主流程)
-      // 需要先获取城市经纬度,这里简化处理
-      _loadAirQualityByCity(city.trim());
-
-      // 4. 更新状态
+      // 3. 更新状态
       _weatherData = weatherData;
       _currentLocationName = weatherData.location;
       _lastSearchedCity = city.trim();
@@ -399,13 +436,19 @@ class WeatherProvider extends ChangeNotifier {
       _errorMessage = null;
 
       notifyListeners();
+
+      // 4. 异步加载空气质量 (不阻塞主流程)
+      // 需要先获取城市经纬度,这里简化处理
+      _loadAirQualityByCity(city.trim(), requestId: requestId);
     } catch (e) {
       debugPrint('WeatherProvider: 获取城市天气失败 - $e');
       _errorMessage = _mapErrorToMessage(e);
       // 不清空旧数据
       notifyListeners();
     } finally {
-      _isLoading = false;
+      if (showLoading) {
+        _isLoading = false;
+      }
       debugPrint(
           'WeatherProvider: 加载完成 - hasData: ${hasData}, hasError: ${hasError}');
       notifyListeners();
@@ -436,15 +479,15 @@ class WeatherProvider extends ChangeNotifier {
       if (_isUsingCurrentLocation && !kIsWeb) {
         // 定位模式: 重新获取定位
         debugPrint('WeatherProvider: 刷新模式 - 重新定位');
-        await loadCurrentLocationWeather();
+        await loadCurrentLocationWeather(showLoading: false);
       } else if (_lastSearchedCity != null) {
         // 城市模式: 重新加载城市
         debugPrint('WeatherProvider: 刷新模式 - 重新加载城市 $_lastSearchedCity');
-        await loadWeatherByCity(_lastSearchedCity!);
+        await loadWeatherByCity(_lastSearchedCity!, showLoading: false);
       } else {
         // 没有上下文,默认刷新定位
         debugPrint('WeatherProvider: 刷新模式 - 无上下文,默认刷新定位');
-        await loadCurrentLocationWeather();
+        await loadCurrentLocationWeather(showLoading: false);
       }
     } catch (e) {
       debugPrint('WeatherProvider: 刷新失败 - $e');
@@ -470,6 +513,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 注意: 此方法不带防抖,防抖请使用 debounceSearch
   Future<void> searchCity(String keyword) async {
     debugPrint('WeatherProvider: 搜索城市 - $keyword');
+    final requestId = ++_searchRequestId;
 
     // 清空旧结果
     _searchResults = [];
@@ -487,15 +531,22 @@ class WeatherProvider extends ChangeNotifier {
 
     try {
       final results = await _weatherApiService.searchCity(keyword.trim());
+      if (requestId != _searchRequestId || keyword != _currentQuery) {
+        return;
+      }
       _searchResults = results;
       debugPrint('WeatherProvider: 搜索成功,找到 ${results.length} 个结果');
     } catch (e) {
       debugPrint('WeatherProvider: 搜索失败 - $e');
-      _searchResults = [];
+      if (requestId == _searchRequestId) {
+        _searchResults = [];
+      }
       // 搜索失败不设置 errorMessage,不影响当前天气显示
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (requestId == _searchRequestId) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -514,6 +565,7 @@ class WeatherProvider extends ChangeNotifier {
     _searchDebounceTimer?.cancel();
 
     if (keyword.trim().isEmpty) {
+      _searchRequestId++;
       _searchResults = [];
       _isSearching = false;
       _currentQuery = '';
@@ -522,7 +574,7 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     // 设置新定时器
-    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _searchDebounceTimer = Timer(AppConstants.searchDebounce, () {
       searchCity(keyword);
     });
   }
@@ -538,6 +590,7 @@ class WeatherProvider extends ChangeNotifier {
   /// - 清空搜索结果列表
   Future<void> selectCity(CitySearchResult city) async {
     debugPrint('WeatherProvider: 选择城市 - ${city.displayName}');
+    final requestId = ++_weatherRequestId;
 
     _isLoading = true;
     _errorMessage = null;
@@ -559,6 +612,11 @@ class WeatherProvider extends ChangeNotifier {
       _errorMessage = null;
 
       debugPrint('WeatherProvider: 城市选择成功 - ${weatherData.location}');
+      _loadAirQualityByCoordinates(
+        city.latitude,
+        city.longitude,
+        requestId: requestId,
+      );
     } catch (e) {
       debugPrint('WeatherProvider: 城市选择失败 - $e');
       _errorMessage = _mapErrorToMessage(e);
@@ -574,6 +632,7 @@ class WeatherProvider extends ChangeNotifier {
   void clearSearchResults() {
     debugPrint('WeatherProvider: 清空搜索结果');
     _searchDebounceTimer?.cancel();
+    _searchRequestId++;
     _searchResults = [];
     _isSearching = false;
     _currentQuery = '';

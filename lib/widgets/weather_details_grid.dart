@@ -46,19 +46,22 @@ class WeatherDetailsGrid extends StatelessWidget {
                 icon: Icons.water_drop,
                 label: '湿度',
                 value: '${weatherData.humidity}%',
-                description: WeatherUtils.getHumidityDescription(weatherData.humidity),
+                description:
+                    WeatherUtils.getHumidityDescription(weatherData.humidity),
               ),
               _DetailItem(
                 icon: Icons.air,
                 label: '气压',
                 value: '${weatherData.pressure} hPa',
-                description: WeatherUtils.getPressureDescription(weatherData.pressure),
+                description:
+                    WeatherUtils.getPressureDescription(weatherData.pressure),
               ),
               _DetailItem(
                 icon: Icons.visibility,
                 label: '能见度',
                 value: VisibilityUtils.formatVisibility(weatherData.visibility),
-                description: WeatherUtils.getVisibilityDescription(weatherData.visibility),
+                description: WeatherUtils.getVisibilityDescription(
+                    weatherData.visibility),
               ),
               _DetailItem(
                 icon: Icons.wb_sunny,
@@ -70,12 +73,14 @@ class WeatherDetailsGrid extends StatelessWidget {
                 icon: Icons.air,
                 label: '风速',
                 value: WindUtils.formatWindSpeed(weatherData.windSpeed),
-                description: WeatherUtils.getWindDescription(weatherData.windSpeed),
+                description:
+                    WeatherUtils.getWindDescription(weatherData.windSpeed),
               ),
               _DetailItem(
                 icon: Icons.thermostat,
                 label: '体感温度',
-                value: TemperatureUtils.formatTemperature(weatherData.feelsLike),
+                value:
+                    TemperatureUtils.formatTemperature(weatherData.feelsLike),
                 description: '实际感受温度',
               ),
               _DetailItem(

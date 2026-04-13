@@ -2,6 +2,7 @@
 /// 基于 Open-Meteo API 返回结构映射
 
 import '../utils/weather_utils.dart';
+import '../utils/constants.dart';
 import 'air_quality_model.dart';
 
 /// 天气数据模型 - 包含当前天气和预报数据
@@ -106,12 +107,14 @@ class WeatherData {
     final dailyForecasts = _parseDailyForecast(daily);
 
     // 解析能见度 (取当前小时对应值)
-    final visibility = _parseVisibility(hourly, hourlyForecasts.isNotEmpty ? hourlyForecasts[0].time : null);
+    final visibility = _parseVisibility(
+        hourly, hourlyForecasts.isNotEmpty ? hourlyForecasts[0].time : null);
 
     // 解析 UV 指数 (取第一天)
-    final uvIndexRaw = (daily['uv_index_max'] as List<dynamic>?)?.isNotEmpty == true
-        ? (daily['uv_index_max'] as List<dynamic>)[0]
-        : 0;
+    final uvIndexRaw =
+        (daily['uv_index_max'] as List<dynamic>?)?.isNotEmpty == true
+            ? (daily['uv_index_max'] as List<dynamic>)[0]
+            : 0;
     final uvIndex = uvIndexRaw.toDouble().toInt();
 
     // 解析日出日落时间
@@ -119,12 +122,14 @@ class WeatherData {
     final sunset = _parseSunset(daily);
 
     // 解析当日高低温
-    final highTemp = (daily['temperature_2m_max'] as List<dynamic>?)?.isNotEmpty == true
-        ? (daily['temperature_2m_max'] as List<dynamic>)[0].toDouble()
-        : temperature;
-    final lowTemp = (daily['temperature_2m_min'] as List<dynamic>?)?.isNotEmpty == true
-        ? (daily['temperature_2m_min'] as List<dynamic>)[0].toDouble()
-        : temperature;
+    final highTemp =
+        (daily['temperature_2m_max'] as List<dynamic>?)?.isNotEmpty == true
+            ? (daily['temperature_2m_max'] as List<dynamic>)[0].toDouble()
+            : temperature;
+    final lowTemp =
+        (daily['temperature_2m_min'] as List<dynamic>?)?.isNotEmpty == true
+            ? (daily['temperature_2m_min'] as List<dynamic>)[0].toDouble()
+            : temperature;
 
     return WeatherData(
       location: locationName.isNotEmpty ? locationName : 'Unknown Location',
@@ -148,9 +153,11 @@ class WeatherData {
   }
 
   /// 解析逐小时预报
-  static List<HourlyForecast> _parseHourlyForecast(Map<String, dynamic> hourly) {
+  static List<HourlyForecast> _parseHourlyForecast(
+      Map<String, dynamic> hourly) {
     final times = (hourly['time'] as List<dynamic>?)?.cast<String>() ?? [];
-    final temps = (hourly['temperature_2m'] as List<dynamic>?)?.cast<num>() ?? [];
+    final temps =
+        (hourly['temperature_2m'] as List<dynamic>?)?.cast<num>() ?? [];
     final codes = (hourly['weather_code'] as List<dynamic>?)?.cast<num>() ?? [];
 
     if (times.isEmpty || temps.isEmpty || codes.isEmpty) {
@@ -160,12 +167,15 @@ class WeatherData {
     // 找到当前小时索引
     final currentIndex = _findCurrentHourIndex(times);
 
-    // 取未来 8 小时
+    // 取未来 N 小时 (根据配置)
     final forecasts = <HourlyForecast>[];
-    final count = 8;
-    for (int i = currentIndex; i < currentIndex + count && i < times.length; i++) {
+    final count = AppConstants.hourlyForecastCount;
+    for (int i = currentIndex;
+        i < currentIndex + count && i < times.length;
+        i++) {
       forecasts.add(HourlyForecast(
-        time: WeatherUtils.formatHourLabel(times[i], currentIndex: i == currentIndex),
+        time: WeatherUtils.formatHourLabel(times[i],
+            currentIndex: i == currentIndex),
         temperature: temps[i].toDouble(),
         conditionCode: codes[i].toInt(),
       ));
@@ -177,24 +187,36 @@ class WeatherData {
   /// 解析逐日预报
   static List<DailyForecast> _parseDailyForecast(Map<String, dynamic> daily) {
     final times = (daily['time'] as List<dynamic>?)?.cast<String>() ?? [];
-    final maxTemps = (daily['temperature_2m_max'] as List<dynamic>?)?.cast<num>() ?? [];
-    final minTemps = (daily['temperature_2m_min'] as List<dynamic>?)?.cast<num>() ?? [];
+    final maxTemps =
+        (daily['temperature_2m_max'] as List<dynamic>?)?.cast<num>() ?? [];
+    final minTemps =
+        (daily['temperature_2m_min'] as List<dynamic>?)?.cast<num>() ?? [];
     final codes = (daily['weather_code'] as List<dynamic>?)?.cast<num>() ?? [];
-    final precipProbs = (daily['precipitation_probability_max'] as List<dynamic>?)?.cast<num>() ?? [];
+    final precipProbs =
+        (daily['precipitation_probability_max'] as List<dynamic>?)
+                ?.cast<num>() ??
+            [];
 
     if (times.isEmpty) {
       return [];
     }
 
-    // 取未来 7 天
-    final count = times.length > 7 ? 7 : times.length;
+    // 取未来 N 天 (根据配置)
+    final count = times.length > AppConstants.dailyForecastCount
+        ? AppConstants.dailyForecastCount
+        : times.length;
     final forecasts = <DailyForecast>[];
     for (int i = 0; i < count; i++) {
       forecasts.add(DailyForecast(
         date: WeatherUtils.formatDailyLabel(times[i], index: i),
-        highTemp: maxTemps.isNotEmpty && i < maxTemps.length ? maxTemps[i].toDouble() : 0,
-        lowTemp: minTemps.isNotEmpty && i < minTemps.length ? minTemps[i].toDouble() : 0,
-        conditionCode: codes.isNotEmpty && i < codes.length ? codes[i].toInt() : 0,
+        highTemp: maxTemps.isNotEmpty && i < maxTemps.length
+            ? maxTemps[i].toDouble()
+            : 0,
+        lowTemp: minTemps.isNotEmpty && i < minTemps.length
+            ? minTemps[i].toDouble()
+            : 0,
+        conditionCode:
+            codes.isNotEmpty && i < codes.length ? codes[i].toInt() : 0,
         precipitationChance: precipProbs.isNotEmpty && i < precipProbs.length
             ? precipProbs[i].toInt()
             : 0,
@@ -221,8 +243,10 @@ class WeatherData {
   }
 
   /// 解析能见度
-  static double _parseVisibility(Map<String, dynamic> hourly, String? currentTime) {
-    final visibilities = (hourly['visibility'] as List<dynamic>?)?.cast<num>() ?? [];
+  static double _parseVisibility(
+      Map<String, dynamic> hourly, String? currentTime) {
+    final visibilities =
+        (hourly['visibility'] as List<dynamic>?)?.cast<num>() ?? [];
     if (visibilities.isEmpty) {
       return 0;
     }

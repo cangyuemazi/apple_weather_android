@@ -62,8 +62,7 @@ class AirQualityCard extends StatelessWidget {
               ),
               // AQI 标准标签
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: cardColor.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(12),

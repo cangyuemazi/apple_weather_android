@@ -45,6 +45,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   void _showOverlay() {
+    if (!mounted) return;
     _removeOverlay();
 
     if (widget.searchResults.isEmpty && !widget.isSearching) {
@@ -52,7 +53,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     }
 
     final overlay = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
@@ -91,14 +93,16 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                       itemBuilder: (context, index) {
                         final result = widget.searchResults[index];
                         return ListTile(
-                          leading: const Icon(Icons.location_on, color: Colors.blue),
+                          leading:
+                              const Icon(Icons.location_on, color: Colors.blue),
                           title: Text(
                             result.displayName,
                             style: const TextStyle(fontSize: 14),
                           ),
                           subtitle: Text(
                             result.country ?? '',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
                           ),
                           onTap: () {
                             widget.onSelect(result);
@@ -119,6 +123,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   void _removeOverlay() {
+    if (!mounted) return;
     _overlayEntry?.remove();
     _overlayEntry = null;
   }

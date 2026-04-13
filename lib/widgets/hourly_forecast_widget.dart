@@ -4,7 +4,6 @@ import '../utils/date_utils.dart';
 import '../utils/weather_utils.dart';
 import '../utils/theme_utils.dart';
 
-/// 逐小时预报组件
 class HourlyForecastWidget extends StatelessWidget {
   final List<HourlyForecast> hourlyForecasts;
 
@@ -89,7 +88,7 @@ class _HourlyItem extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              _getWeatherIcon(forecast.conditionCode),
+              WeatherUtils.getWeatherIcon(forecast.conditionCode),
               color: Colors.white,
               size: 24,
             ),
@@ -106,14 +105,5 @@ class _HourlyItem extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _getWeatherIcon(int code) {
-    if (code == 0) return Icons.wb_sunny;
-    if (code >= 1 && code <= 3) return Icons.cloud;
-    if (code >= 51 && code <= 65) return Icons.water_drop;
-    if (code >= 71 && code <= 75) return Icons.ac_unit;
-    if (code >= 95) return Icons.thunderstorm;
-    return Icons.cloud;
   }
 }

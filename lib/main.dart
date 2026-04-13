@@ -29,10 +29,10 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) {
         final provider = WeatherProvider();
-        // 初始化时自动加载天气
         provider.init();
         return provider;
       },
+      lazy: false,
       child: MaterialApp(
         title: '天气',
         debugShowCheckedModeBanner: false,

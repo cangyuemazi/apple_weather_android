@@ -2,7 +2,8 @@
 class AppConstants {
   // API 配置
   static const String weatherApiBaseUrl = 'https://api.open-meteo.com/v1';
-  static const String geocodingApiUrl = 'https://geocoding-api.open-meteo.com/v1';
+  static const String geocodingApiUrl =
+      'https://geocoding-api.open-meteo.com/v1';
   static const Duration apiTimeout = Duration(seconds: 15);
   static const Duration searchTimeout = Duration(seconds: 10);
 
@@ -34,12 +35,12 @@ class ErrorMessages {
 
 /// 天气背景类型
 enum WeatherBackgroundType {
-  clearDay,      // 晴天白天
-  clearNight,    // 晴天夜间
-  cloudy,        // 多云
-  rainy,         // 雨天
-  snowy,         // 雪天
-  foggy,         // 雾天
-  thunderstorm,  // 雷暴
-  unknown,       // 未知
+  clearDay, // 晴天白天
+  clearNight, // 晴天夜间
+  cloudy, // 多云
+  rainy, // 雨天
+  snowy, // 雪天
+  foggy, // 雾天
+  thunderstorm, // 雷暴
+  unknown, // 未知
 }
