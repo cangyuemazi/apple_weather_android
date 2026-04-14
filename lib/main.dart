@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'providers/weather_provider.dart';
-import 'screens/home_screen.dart';
+import 'providers/weather_hub_provider.dart';
+import 'screens/weather_dashboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.transparent,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: const HomeScreen(),
+        home: const WeatherDashboardScreen(),
       ),
     );
   }
