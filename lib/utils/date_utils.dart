@@ -1,12 +1,26 @@
 import 'package:intl/intl.dart';
 
-/// 日期工具类
+enum TemperatureUnit {
+  celsius,
+  fahrenheit;
+
+  String get cacheValue => name;
+  String get label => this == TemperatureUnit.celsius ? '℃' : '℉';
+
+  static TemperatureUnit fromCacheValue(String? value) {
+    return TemperatureUnit.values.firstWhere(
+      (unit) => unit.cacheValue == value,
+      orElse: () => TemperatureUnit.celsius,
+    );
+  }
+}
+
 class AppDateUtils {
   static String formatDate(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('MM月dd日').format(dateTime);
-    } catch (e) {
+    } catch (_) {
       return dateTimeStr;
     }
   }
@@ -14,9 +28,9 @@ class AppDateUtils {
   static String getWeekday(String dateTimeStr) {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
-      final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
       return weekdays[dateTime.weekday - 1];
-    } catch (e) {
+    } catch (_) {
       return '';
     }
   }
@@ -25,7 +39,7 @@ class AppDateUtils {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('HH:mm').format(dateTime);
-    } catch (e) {
+    } catch (_) {
       return '--:--';
     }
   }
@@ -34,7 +48,7 @@ class AppDateUtils {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('HH:00').format(dateTime);
-    } catch (e) {
+    } catch (_) {
       return dateTimeStr;
     }
   }
@@ -46,9 +60,9 @@ class AppDateUtils {
 
     try {
       final dateTime = DateTime.parse(dateStr);
-      final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
       return weekdays[dateTime.weekday - 1];
-    } catch (e) {
+    } catch (_) {
       return dateStr;
     }
   }
@@ -72,13 +86,15 @@ class AppDateUtils {
       } else {
         return formatDate(dateTimeStr);
       }
-    } catch (e) {
+    } catch (_) {
       return dateTimeStr;
     }
   }
 
-  static String formatHourLabel(String dateTimeStr,
-      {bool currentIndex = false}) {
+  static String formatHourLabel(
+    String dateTimeStr, {
+    bool currentIndex = false,
+  }) {
     if (currentIndex) {
       return 'Now';
     }
@@ -86,7 +102,7 @@ class AppDateUtils {
     try {
       final dateTime = DateTime.parse(dateTimeStr);
       return DateFormat('HH:mm').format(dateTime);
-    } catch (e) {
+    } catch (_) {
       return dateTimeStr;
     }
   }
@@ -100,14 +116,35 @@ class AppDateUtils {
   }
 }
 
-/// 温度工具类
 class TemperatureUtils {
-  static String formatTemperature(double temperature) {
-    return '${temperature.round()}°';
+  static double convertTemperature(
+    double temperature,
+    TemperatureUnit unit,
+  ) {
+    if (unit == TemperatureUnit.fahrenheit) {
+      return celsiusToFahrenheit(temperature);
+    }
+    return temperature;
   }
 
-  static String formatTemperatureRange(double min, double max) {
-    return '${min.round()}° / ${max.round()}°';
+  static String formatTemperature(
+    double temperature, {
+    TemperatureUnit unit = TemperatureUnit.celsius,
+  }) {
+    final converted = convertTemperature(temperature, unit).round();
+    return unit == TemperatureUnit.celsius
+        ? '$converted°'
+        : '$converted°F';
+  }
+
+  static String formatTemperatureRange(
+    double min,
+    double max, {
+    TemperatureUnit unit = TemperatureUnit.celsius,
+  }) {
+    final formattedMin = formatTemperature(min, unit: unit);
+    final formattedMax = formatTemperature(max, unit: unit);
+    return '$formattedMin / $formattedMax';
   }
 
   static double celsiusToFahrenheit(double celsius) {
@@ -115,7 +152,6 @@ class TemperatureUtils {
   }
 }
 
-/// 风速工具类
 class WindUtils {
   static String formatWindSpeed(double windSpeed) {
     return '${windSpeed.round()} km/h';
@@ -136,7 +172,6 @@ class WindUtils {
   }
 }
 
-/// 能见度工具类
 class VisibilityUtils {
   static String formatVisibility(double visibility) {
     if (visibility < 1000) {

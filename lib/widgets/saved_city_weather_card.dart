@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/saved_city_weather.dart';
+import '../utils/date_utils.dart';
 import '../utils/theme_utils.dart';
 import '../utils/weather_utils.dart';
 import 'air_quality_card.dart';
@@ -12,17 +14,32 @@ class SavedCityWeatherCard extends StatelessWidget {
   final SavedCityWeather cityWeather;
   final bool isExpanded;
   final VoidCallback onToggle;
+  final VoidCallback onDelete;
+  final VoidCallback onTogglePin;
+  final TemperatureUnit temperatureUnit;
+  final Widget? dragHandle;
 
   const SavedCityWeatherCard({
     super.key,
     required this.cityWeather,
     required this.isExpanded,
     required this.onToggle,
+    required this.onDelete,
+    required this.onTogglePin,
+    required this.temperatureUnit,
+    this.dragHandle,
   });
 
   @override
   Widget build(BuildContext context) {
     final weatherData = cityWeather.weatherData;
+    final now = DateTime.now();
+    final isSameDay = now.year == cityWeather.updatedAt.year &&
+        now.month == cityWeather.updatedAt.month &&
+        now.day == cityWeather.updatedAt.day;
+    final updatedAtLabel = DateFormat(
+      isSameDay ? 'HH:mm' : 'MM-dd HH:mm',
+    ).format(cityWeather.updatedAt);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -75,7 +92,41 @@ class SavedCityWeatherCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (cityWeather.isPinned) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.push_pin,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          '已置顶',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const Spacer(),
+                if (dragHandle != null) ...[
+                  dragHandle!,
+                  const SizedBox(width: 8),
+                ],
                 AnimatedRotation(
                   duration: const Duration(milliseconds: 220),
                   turns: isExpanded ? 0.5 : 0,
@@ -115,7 +166,15 @@ class SavedCityWeatherCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'H:${weatherData.highTemp.round()}°  L:${weatherData.lowTemp.round()}°',
+                        '更新于 $updatedAtLabel',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'H:${TemperatureUtils.formatTemperature(weatherData.highTemp, unit: temperatureUnit)}  L:${TemperatureUtils.formatTemperature(weatherData.lowTemp, unit: temperatureUnit)}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.68),
                           fontSize: 13,
@@ -135,7 +194,10 @@ class SavedCityWeatherCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${weatherData.temperature.round()}°',
+                      TemperatureUtils.formatTemperature(
+                        weatherData.temperature,
+                        unit: temperatureUnit,
+                      ),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 42,
@@ -161,7 +223,10 @@ class SavedCityWeatherCard extends StatelessWidget {
                       children: [
                         _InfoChip(
                           label: '体感',
-                          value: '${weatherData.feelsLike.round()}°',
+                          value: TemperatureUtils.formatTemperature(
+                            weatherData.feelsLike,
+                            unit: temperatureUnit,
+                          ),
                         ),
                         _InfoChip(
                           label: '湿度',
@@ -185,18 +250,67 @@ class SavedCityWeatherCard extends StatelessWidget {
                     if (weatherData.hourlyForecast.isNotEmpty) ...[
                       HourlyForecastWidget(
                         hourlyForecasts: weatherData.hourlyForecast,
+                        temperatureUnit: temperatureUnit,
                       ),
                       const SizedBox(height: 16),
                     ],
                     if (weatherData.dailyForecast.isNotEmpty) ...[
                       DailyForecastWidget(
                         dailyForecasts: weatherData.dailyForecast,
+                        temperatureUnit: temperatureUnit,
                       ),
                       const SizedBox(height: 16),
                     ],
                     AirQualityCard(data: weatherData.airQuality),
                     const SizedBox(height: 16),
-                    WeatherDetailsGrid(weatherData: weatherData),
+                    WeatherDetailsGrid(
+                      weatherData: weatherData,
+                      temperatureUnit: temperatureUnit,
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: onTogglePin,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white.withValues(alpha: 0.14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: Icon(
+                          cityWeather.isPinned
+                              ? Icons.push_pin
+                              : Icons.push_pin_outlined,
+                        ),
+                        label: Text(cityWeather.isPinned ? '取消置顶' : '置顶城市'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: onDelete,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.red.withValues(alpha: 0.22),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('删除城市'),
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/city_search_result.dart';
 import '../models/weather_model.dart';
 import '../providers/weather_hub_provider.dart';
+import '../utils/date_utils.dart';
 import '../widgets/air_quality_card.dart';
 import '../widgets/current_weather_card.dart';
 import '../widgets/daily_forecast_widget.dart';
@@ -25,6 +27,78 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _showSearch = false;
 
+  String _formatLastUpdated(DateTime lastUpdated) {
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdated);
+
+    if (difference.inMinutes < 1) {
+      return '刚刚';
+    }
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} 分钟前';
+    }
+
+    if (difference.inHours < 24 &&
+        now.year == lastUpdated.year &&
+        now.month == lastUpdated.month &&
+        now.day == lastUpdated.day) {
+      return '今天 ${DateFormat('HH:mm').format(lastUpdated)}';
+    }
+
+    return DateFormat('MM-dd HH:mm').format(lastUpdated);
+  }
+
+  Widget _buildRefreshStatus(WeatherProvider provider) {
+    if (provider.lastUpdated == null && !provider.isRefreshing) {
+      return const SizedBox.shrink();
+    }
+
+    final isExpired = provider.isCacheExpired;
+    final icon = provider.isRefreshing
+        ? Icons.sync
+        : isExpired
+            ? Icons.history
+            : Icons.check_circle_outline;
+    final message = provider.isRefreshing
+        ? '正在刷新天气数据...'
+        : provider.lastUpdated == null
+            ? '暂无缓存时间'
+            : isExpired
+                ? '缓存已过期，当前显示 ${_formatLastUpdated(provider.lastUpdated!)} 的数据'
+                : '最后更新 ${_formatLastUpdated(provider.lastUpdated!)}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color:
+            (isExpired ? Colors.amber : Colors.white).withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              (isExpired ? Colors.amber : Colors.white).withValues(alpha: 0.24),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.92),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -44,7 +118,9 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
     CitySearchResult result,
   ) async {
     final isNew = await provider.selectCity(result);
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     if (provider.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,9 +141,93 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
         backgroundColor: Colors.black.withValues(alpha: 0.78),
         content: Text(
           isNew
-              ? '已将 ${result.displayName} 添加到前台'
+              ? '已将 ${result.displayName} 添加到首页'
               : '已更新 ${result.displayName} 并置顶显示',
         ),
+      ),
+    );
+  }
+
+  Future<void> _handleDeleteCity(
+    WeatherProvider provider,
+    String cityId,
+    String displayName,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('删除城市'),
+          content: Text('确定要从卡片列表中移除 $displayName 吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('删除'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    final removedCity = provider.removeCityAndReturn(cityId);
+    if (removedCity == null || !mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.black.withValues(alpha: 0.78),
+        action: SnackBarAction(
+          label: '撤销',
+          textColor: Colors.white,
+          onPressed: () => provider.restoreRemovedCity(removedCity),
+        ),
+        content: Text('已删除 $displayName'),
+      ),
+    );
+  }
+
+  void _handleTogglePin(
+    WeatherProvider provider,
+    String cityId,
+    String displayName,
+  ) {
+    final pinned = provider.toggleCityPinned(cityId);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.black.withValues(alpha: 0.78),
+        content: Text(pinned ? '已置顶 $displayName' : '已取消置顶 $displayName'),
+      ),
+    );
+  }
+
+  void _handleReorderSavedCities(
+    WeatherProvider provider,
+    int oldIndex,
+    int newIndex,
+  ) {
+    final normalizedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final moved = provider.reorderSavedCities(oldIndex, normalizedNewIndex);
+    if (moved) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.black.withValues(alpha: 0.78),
+        content: const Text('置顶城市和普通城市分组排序，暂不支持跨组拖动。'),
       ),
     );
   }
@@ -94,7 +254,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     provider.savedCities.isEmpty
-                        ? '搜索城市后会像苹果天气一样以卡片加入首页'
+                        ? '搜索城市后会以卡片形式加入首页'
                         : '已添加 ${provider.savedCities.length} 个城市卡片',
                     style: TextStyle(
                       fontSize: 12,
@@ -103,6 +263,28 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                   ),
                 ],
               ),
+            ),
+            PopupMenuButton<TemperatureUnit>(
+              tooltip: '切换温标',
+              icon: Text(
+                provider.temperatureUnit.label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              onSelected: provider.setTemperatureUnit,
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: TemperatureUnit.celsius,
+                  child: Text('摄氏度 ℃'),
+                ),
+                const PopupMenuItem(
+                  value: TemperatureUnit.fahrenheit,
+                  child: Text('华氏度 ℉'),
+                ),
+              ],
             ),
             IconButton(
               icon: const Icon(Icons.search, color: Colors.white),
@@ -114,16 +296,17 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.my_location, color: Colors.white),
-              onPressed: () => provider.loadCurrentLocationWeather(),
+              onPressed: provider.isBusy
+                  ? null
+                  : () => provider.loadCurrentLocationWeather(),
             ),
             IconButton(
               icon: Icon(
                 Icons.refresh,
                 color: Colors.white.withValues(alpha: 0.84),
               ),
-              onPressed: provider.isRefreshing
-                  ? null
-                  : () => provider.refreshWeather(),
+              onPressed:
+                  provider.isBusy ? null : () => provider.refreshWeather(),
             ),
           ] else ...[
             Expanded(
@@ -132,7 +315,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: '搜索城市并添加到前台...',
+                  hintText: '搜索城市并添加到首页...',
                   hintStyle: TextStyle(
                     color: Colors.white.withValues(alpha: 0.62),
                   ),
@@ -235,6 +418,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   Widget _buildSearchResults(WeatherProvider provider) {
     final shouldShowPanel = _showSearch &&
         (_searchController.text.trim().isNotEmpty ||
+            provider.isSearchPending ||
             provider.isSearching ||
             provider.searchResults.isNotEmpty);
 
@@ -248,12 +432,12 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: provider.isSearching
+      child: provider.isSearchPending || provider.isSearching
           ? const Padding(
               padding: EdgeInsets.all(24),
               child: Center(child: CircularProgressIndicator()),
             )
-          : provider.searchResults.isEmpty
+          : provider.hasCompletedSearch && provider.searchResults.isEmpty
               ? const Padding(
                   padding: EdgeInsets.all(20),
                   child: Text(
@@ -267,54 +451,85 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
               : Column(
                   children: [
                     for (final result in provider.searchResults)
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        leading: const Icon(
-                          Icons.location_on,
-                          color: Colors.blue,
-                        ),
-                        title: Text(
-                          result.displayName,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(result.country ?? ''),
-                        trailing: const Icon(
-                          Icons.add_circle_outline,
-                          color: Colors.black54,
-                        ),
-                        onTap: () => _handleSearchSelect(provider, result),
+                      Builder(
+                        builder: (context) {
+                          final isSaved = provider.hasSavedCity(result);
+
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            leading: Icon(
+                              isSaved
+                                  ? Icons.bookmark_added_rounded
+                                  : Icons.location_on,
+                              color: isSaved ? Colors.green : Colors.blue,
+                            ),
+                            title: Text(
+                              result.displayName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              isSaved
+                                  ? '已保存，点击后会刷新并置顶'
+                                  : (result.country ?? ''),
+                            ),
+                            trailing: Icon(
+                              isSaved
+                                  ? Icons.refresh_rounded
+                                  : Icons.add_circle_outline,
+                              color: isSaved ? Colors.green : Colors.black54,
+                            ),
+                            onTap: provider.isBusy
+                                ? null
+                                : () => _handleSearchSelect(provider, result),
+                          );
+                        },
                       ),
                   ],
                 ),
     );
   }
 
-  List<Widget> _buildLocationSection(WeatherData weatherData) {
+  List<Widget> _buildLocationSection(
+    WeatherData weatherData,
+    TemperatureUnit temperatureUnit,
+  ) {
     return [
       _buildSectionHeader(
         '我的位置',
         '定位天气固定在最上方，作为主页主卡片展示',
         icon: Icons.near_me,
       ),
-      CurrentWeatherCard(weatherData: weatherData),
+      CurrentWeatherCard(
+        weatherData: weatherData,
+        temperatureUnit: temperatureUnit,
+      ),
       const SizedBox(height: 16),
       AirQualityCard(data: weatherData.airQuality),
       const SizedBox(height: 16),
       if (weatherData.hourlyForecast.isNotEmpty) ...[
-        HourlyForecastWidget(hourlyForecasts: weatherData.hourlyForecast),
+        HourlyForecastWidget(
+          hourlyForecasts: weatherData.hourlyForecast,
+          temperatureUnit: temperatureUnit,
+        ),
         const SizedBox(height: 16),
       ],
       if (weatherData.dailyForecast.isNotEmpty) ...[
-        DailyForecastWidget(dailyForecasts: weatherData.dailyForecast),
+        DailyForecastWidget(
+          dailyForecasts: weatherData.dailyForecast,
+          temperatureUnit: temperatureUnit,
+        ),
         const SizedBox(height: 16),
       ],
-      WeatherDetailsGrid(weatherData: weatherData),
+      WeatherDetailsGrid(
+        weatherData: weatherData,
+        temperatureUnit: temperatureUnit,
+      ),
       const SizedBox(height: 24),
     ];
   }
@@ -325,7 +540,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
         '城市卡片',
         provider.savedCities.isEmpty
             ? '搜索任意城市后，这里会以折叠卡片形式展示'
-            : '轻点卡片即可展开，查看更完整的天气细节',
+            : '轻点卡片即可展开，长按右侧手柄可调整同组顺序',
         icon: Icons.view_carousel_outlined,
       ),
       if (provider.savedCities.isEmpty)
@@ -366,15 +581,54 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
           ),
         )
       else
-        ...provider.savedCities.map(
-          (cityWeather) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: SavedCityWeatherCard(
-              cityWeather: cityWeather,
-              isExpanded: provider.expandedCityId == cityWeather.id,
-              onToggle: () => provider.toggleCityExpanded(cityWeather.id),
-            ),
-          ),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          buildDefaultDragHandles: false,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.savedCities.length,
+          onReorder: (oldIndex, newIndex) =>
+              _handleReorderSavedCities(provider, oldIndex, newIndex),
+          itemBuilder: (context, index) {
+            final cityWeather = provider.savedCities[index];
+            return Padding(
+              key: ValueKey('saved-city-${cityWeather.id}'),
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SavedCityWeatherCard(
+                cityWeather: cityWeather,
+                isExpanded: provider.expandedCityId == cityWeather.id,
+                onToggle: () => provider.toggleCityExpanded(cityWeather.id),
+                onTogglePin: () => _handleTogglePin(
+                  provider,
+                  cityWeather.id,
+                  cityWeather.displayName,
+                ),
+                onDelete: () => _handleDeleteCity(
+                  provider,
+                  cityWeather.id,
+                  cityWeather.displayName,
+                ),
+                temperatureUnit: provider.temperatureUnit,
+                dragHandle: ReorderableDelayedDragStartListener(
+                  index: index,
+                  child: Tooltip(
+                    message: cityWeather.isPinned ? '拖动调整置顶城市顺序' : '拖动调整城市顺序',
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Icon(
+                        Icons.drag_handle_rounded,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
     ];
   }
@@ -455,9 +709,11 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                                 ),
                               ],
                               _buildSearchResults(provider),
+                              _buildRefreshStatus(provider),
                               if (provider.currentLocationWeather != null)
                                 ..._buildLocationSection(
                                   provider.currentLocationWeather!,
+                                  provider.temperatureUnit,
                                 ),
                               ..._buildSavedCitiesSection(provider),
                               if (!provider.hasData) ...[

@@ -154,6 +154,39 @@ class WeatherData {
     );
   }
 
+  factory WeatherData.fromStorageJson(Map<String, dynamic> json) {
+    return WeatherData(
+      location: json['location'] as String? ?? 'Unknown Location',
+      temperature: (json['temperature'] ?? 0).toDouble(),
+      feelsLike: (json['feelsLike'] ?? 0).toDouble(),
+      condition: json['condition'] as String? ?? '',
+      conditionCode: (json['conditionCode'] ?? 0).toInt(),
+      humidity: (json['humidity'] ?? 0).toInt(),
+      pressure: (json['pressure'] ?? 0).toInt(),
+      visibility: (json['visibility'] ?? 0).toDouble(),
+      uvIndex: (json['uvIndex'] ?? 0).toInt(),
+      windSpeed: (json['windSpeed'] ?? 0).toDouble(),
+      sunrise: json['sunrise'] as String? ?? '--:--',
+      sunset: json['sunset'] as String? ?? '--:--',
+      isDayTime: json['isDayTime'] as bool? ?? true,
+      highTemp: (json['highTemp'] ?? 0).toDouble(),
+      lowTemp: (json['lowTemp'] ?? 0).toDouble(),
+      hourlyForecast: ((json['hourlyForecast'] as List<dynamic>?) ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map(HourlyForecast.fromJson)
+          .toList(),
+      dailyForecast: ((json['dailyForecast'] as List<dynamic>?) ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map(DailyForecast.fromJson)
+          .toList(),
+      airQuality: json['airQuality'] is Map<String, dynamic>
+          ? AirQualityData.fromStorageJson(
+              json['airQuality'] as Map<String, dynamic>,
+            )
+          : null,
+    );
+  }
+
   /// 解析逐小时预报
   static List<HourlyForecast> _parseHourlyForecast(
       Map<String, dynamic> hourly) {
@@ -304,6 +337,7 @@ class WeatherData {
       'lowTemp': lowTemp,
       'hourlyForecast': hourlyForecast.map((e) => e.toJson()).toList(),
       'dailyForecast': dailyForecast.map((e) => e.toJson()).toList(),
+      'airQuality': airQuality?.toJson(),
     };
   }
 

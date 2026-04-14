@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../utils/constants.dart';
 import '../utils/date_utils.dart';
 
@@ -84,10 +85,14 @@ class WeatherUtils {
     return AppDateUtils.formatTime(dateTimeStr);
   }
 
-  static String formatHourLabel(String dateTimeStr,
-      {bool currentIndex = false}) {
-    return AppDateUtils.formatHourLabel(dateTimeStr,
-        currentIndex: currentIndex);
+  static String formatHourLabel(
+    String dateTimeStr, {
+    bool currentIndex = false,
+  }) {
+    return AppDateUtils.formatHourLabel(
+      dateTimeStr,
+      currentIndex: currentIndex,
+    );
   }
 
   static String formatDailyLabel(String dateStr, {int index = 0}) {
@@ -147,18 +152,18 @@ class WeatherUtils {
   }
 
   static String getClothingSuggestion(double temperature) {
-    if (temperature < 0) return '极寒天气,请穿羽绒服并注意保暖';
-    if (temperature < 10) return '天气较冷,建议穿厚外套或毛衣';
-    if (temperature < 20) return '温度适中,建议穿长袖衬衫或薄外套';
-    if (temperature < 30) return '天气温暖,适合穿短袖或薄衣物';
-    return '天气炎热,请穿轻薄衣物并注意防晒';
+    if (temperature < 0) return '极寒天气，请穿羽绒服并注意保暖';
+    if (temperature < 10) return '天气较冷，建议穿厚外套或毛衣';
+    if (temperature < 20) return '温度适中，建议穿长袖衬衫或薄外套';
+    if (temperature < 30) return '天气温暖，适合穿短袖或薄衣物';
+    return '天气炎热，请穿轻薄衣物并注意防晒';
   }
 
   static String getTravelSuggestion(int weatherCode, double windSpeed) {
-    if (isThunderstormCode(weatherCode)) return '雷暴天气,建议减少外出';
-    if (isSnowCode(weatherCode)) return '雨雪天气,出行请注意安全';
-    if (isRainCode(weatherCode)) return '雨天出行,请携带雨具';
-    if (windSpeed > 30) return '风力较大,注意防风';
-    return '天气良好,适合出行';
+    if (isThunderstormCode(weatherCode)) return '雷暴天气，建议减少外出';
+    if (isSnowCode(weatherCode)) return '雨雪天气，出行请注意安全';
+    if (isRainCode(weatherCode)) return '雨天出行，请携带雨具';
+    if (windSpeed > 30) return '风力较大，注意防风';
+    return '天气良好，适合出行';
   }
 }

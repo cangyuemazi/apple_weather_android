@@ -1,14 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+
 import '../models/weather_model.dart';
-import '../utils/weather_utils.dart';
+import '../utils/date_utils.dart';
 import '../utils/theme_utils.dart';
+import '../utils/weather_utils.dart';
 
 class HourlyForecastWidget extends StatelessWidget {
   final List<HourlyForecast> hourlyForecasts;
+  final TemperatureUnit temperatureUnit;
 
   const HourlyForecastWidget({
     super.key,
     required this.hourlyForecasts,
+    required this.temperatureUnit,
   });
 
   @override
@@ -43,7 +47,10 @@ class HourlyForecastWidget extends StatelessWidget {
               itemCount: hourlyForecasts.length,
               itemBuilder: (context, index) {
                 final forecast = hourlyForecasts[index];
-                return _HourlyItem(forecast: forecast);
+                return _HourlyItem(
+                  forecast: forecast,
+                  temperatureUnit: temperatureUnit,
+                );
               },
             ),
           ),
@@ -55,9 +62,11 @@ class HourlyForecastWidget extends StatelessWidget {
 
 class _HourlyItem extends StatelessWidget {
   final HourlyForecast forecast;
+  final TemperatureUnit temperatureUnit;
 
   const _HourlyItem({
     required this.forecast,
+    required this.temperatureUnit,
   });
 
   @override
@@ -68,7 +77,6 @@ class _HourlyItem extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // 时间
           Text(
             forecast.time,
             style: const TextStyle(
@@ -77,7 +85,6 @@ class _HourlyItem extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          // 天气图标占位
           Container(
             width: 40,
             height: 40,
@@ -91,9 +98,11 @@ class _HourlyItem extends StatelessWidget {
               size: 24,
             ),
           ),
-          // 温度
           Text(
-            '${forecast.temperature.round()}°',
+            TemperatureUtils.formatTemperature(
+              forecast.temperature,
+              unit: temperatureUnit,
+            ),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

@@ -108,6 +108,25 @@ class AirQualityData {
     );
   }
 
+  factory AirQualityData.fromStorageJson(Map<String, dynamic> json) {
+    return AirQualityData(
+      aqiValue: (json['aqiValue'] ?? 0).toInt(),
+      aqiStandard: json['aqiStandard'] as String? ?? 'US',
+      aqiLevelText: json['aqiLevelText'] as String? ?? '',
+      primaryPollutant: json['primaryPollutant'] as String?,
+      pm25: (json['pm25'] ?? 0).toDouble(),
+      pm10: (json['pm10'] ?? 0).toDouble(),
+      no2: (json['no2'] ?? 0).toDouble(),
+      o3: (json['o3'] ?? 0).toDouble(),
+      so2: (json['so2'] ?? 0).toDouble(),
+      co: (json['co'] ?? 0).toDouble(),
+      uvIndex: (json['uvIndex'] ?? 0).toInt(),
+      lastUpdated: json['lastUpdated'] == null
+          ? null
+          : DateTime.tryParse(json['lastUpdated'] as String),
+    );
+  }
+
   /// 获取 AQI 等级文案
   static String _getAqiLevelText(int value, String standard) {
     if (standard == 'EU') {

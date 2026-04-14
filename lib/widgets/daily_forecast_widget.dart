@@ -1,15 +1,18 @@
-import 'package:flutter/material.dart';
-import '../models/weather_model.dart';
-import '../utils/weather_utils.dart';
-import '../utils/theme_utils.dart';
+﻿import 'package:flutter/material.dart';
 
-/// 逐日预报组件
+import '../models/weather_model.dart';
+import '../utils/date_utils.dart';
+import '../utils/theme_utils.dart';
+import '../utils/weather_utils.dart';
+
 class DailyForecastWidget extends StatelessWidget {
   final List<DailyForecast> dailyForecasts;
+  final TemperatureUnit temperatureUnit;
 
   const DailyForecastWidget({
     super.key,
     required this.dailyForecasts,
+    required this.temperatureUnit,
   });
 
   @override
@@ -18,7 +21,6 @@ class DailyForecastWidget extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // 计算温度范围用于温度条
     double globalMin = dailyForecasts.first.lowTemp;
     double globalMax = dailyForecasts.first.highTemp;
     for (final forecast in dailyForecasts) {
@@ -59,6 +61,7 @@ class DailyForecastWidget extends StatelessWidget {
                 forecast: forecast,
                 globalMin: globalMin,
                 globalMax: globalMax,
+                temperatureUnit: temperatureUnit,
               );
             },
           ),
@@ -72,11 +75,13 @@ class _DailyItem extends StatelessWidget {
   final DailyForecast forecast;
   final double globalMin;
   final double globalMax;
+  final TemperatureUnit temperatureUnit;
 
   const _DailyItem({
     required this.forecast,
     required this.globalMin,
     required this.globalMax,
+    required this.temperatureUnit,
   });
 
   @override
@@ -85,7 +90,6 @@ class _DailyItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          // 日期
           SizedBox(
             width: 80,
             child: Text(
@@ -96,18 +100,19 @@ class _DailyItem extends StatelessWidget {
               ),
             ),
           ),
-          // 天气图标
           Icon(
             WeatherUtils.getWeatherIcon(forecast.conditionCode),
             color: Colors.white,
             size: 24,
           ),
           const SizedBox(width: 12),
-          // 低温
           SizedBox(
-            width: 40,
+            width: 48,
             child: Text(
-              '${forecast.lowTemp.round()}°',
+              TemperatureUtils.formatTemperature(
+                forecast.lowTemp,
+                unit: temperatureUnit,
+              ),
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white70,
@@ -116,7 +121,6 @@ class _DailyItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // 温度条
           Expanded(
             child: _TemperatureBar(
               min: forecast.lowTemp,
@@ -126,11 +130,13 @@ class _DailyItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // 高温
           SizedBox(
-            width: 40,
+            width: 48,
             child: Text(
-              '${forecast.highTemp.round()}°',
+              TemperatureUtils.formatTemperature(
+                forecast.highTemp,
+                unit: temperatureUnit,
+              ),
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white,
@@ -144,7 +150,6 @@ class _DailyItem extends StatelessWidget {
   }
 }
 
-/// 温度条
 class _TemperatureBar extends StatelessWidget {
   final double min;
   final double max;
@@ -179,14 +184,12 @@ class _TemperatureBar extends StatelessWidget {
       height: 6,
       child: Stack(
         children: [
-          // 背景条
           Container(
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          // 温度范围条
           Positioned(
             left: leftPadding.clamp(0.0, 1.0) * 100,
             right: (1.0 - width.clamp(0.0, 1.0) - leftPadding.clamp(0.0, 1.0)) *

@@ -1,16 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+
 import '../models/weather_model.dart';
 import '../utils/date_utils.dart';
-import '../utils/weather_utils.dart';
 import '../utils/theme_utils.dart';
+import '../utils/weather_utils.dart';
 
-/// 天气详情网格
 class WeatherDetailsGrid extends StatelessWidget {
   final WeatherData weatherData;
+  final TemperatureUnit temperatureUnit;
 
   const WeatherDetailsGrid({
     super.key,
     required this.weatherData,
+    required this.temperatureUnit,
   });
 
   @override
@@ -50,7 +52,7 @@ class WeatherDetailsGrid extends StatelessWidget {
                     WeatherUtils.getHumidityDescription(weatherData.humidity),
               ),
               _DetailItem(
-                icon: Icons.air,
+                icon: Icons.speed,
                 label: '气压',
                 value: '${weatherData.pressure} hPa',
                 description:
@@ -60,8 +62,8 @@ class WeatherDetailsGrid extends StatelessWidget {
                 icon: Icons.visibility,
                 label: '能见度',
                 value: VisibilityUtils.formatVisibility(weatherData.visibility),
-                description: WeatherUtils.getVisibilityDescription(
-                    weatherData.visibility),
+                description:
+                    WeatherUtils.getVisibilityDescription(weatherData.visibility),
               ),
               _DetailItem(
                 icon: Icons.wb_sunny,
@@ -79,21 +81,23 @@ class WeatherDetailsGrid extends StatelessWidget {
               _DetailItem(
                 icon: Icons.thermostat,
                 label: '体感温度',
-                value:
-                    TemperatureUtils.formatTemperature(weatherData.feelsLike),
+                value: TemperatureUtils.formatTemperature(
+                  weatherData.feelsLike,
+                  unit: temperatureUnit,
+                ),
                 description: '实际感受温度',
               ),
               _DetailItem(
                 icon: Icons.wb_sunny_outlined,
                 label: '日出',
                 value: weatherData.sunrise,
-                description: '今日日出',
+                description: '今日日出时间',
               ),
               _DetailItem(
                 icon: Icons.nights_stay,
                 label: '日落',
                 value: weatherData.sunset,
-                description: '今日日落',
+                description: '今日日落时间',
               ),
             ],
           ),
