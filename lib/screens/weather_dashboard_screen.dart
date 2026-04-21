@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/city_search_result.dart';
+import '../models/saved_city_weather.dart';
 import '../models/weather_model.dart';
 import '../providers/weather_hub_provider.dart';
 import '../utils/date_utils.dart';
@@ -25,7 +26,7 @@ class WeatherDashboardScreen extends StatefulWidget {
 
 class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _showSearch = false;
+  final ValueNotifier<bool> _showSearch = ValueNotifier<bool>(false);
 
   String _formatLastUpdated(DateTime lastUpdated) {
     final now = DateTime.now();
@@ -102,13 +103,12 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _showSearch.dispose();
     super.dispose();
   }
 
   void _closeSearch(WeatherProvider provider) {
-    setState(() {
-      _showSearch = false;
-    });
+    _showSearch.value = false;
     _searchController.clear();
     provider.clearSearchResults();
   }
@@ -233,12 +233,25 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   }
 
   Widget _buildAppBar(WeatherProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (!_showSearch) ...[
+    return ValueListenableBuilder<bool>(
+      valueListenable: _showSearch,
+      builder: (context, showSearch, _) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (!showSearch) ..._buildAppBarDefault(provider)
+              else ..._buildAppBarSearch(provider),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildAppBarDefault(WeatherProvider provider) {
+    return [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,92 +299,90 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                 ),
               ],
             ),
-            IconButton(
-              icon: const Icon(Icons.search, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _showSearch = true;
-                });
-              },
+      IconButton(
+        icon: const Icon(Icons.search, color: Colors.white),
+        onPressed: () => _showSearch.value = true,
+      ),
+      IconButton(
+        icon: const Icon(Icons.my_location, color: Colors.white),
+        onPressed: provider.isBusy
+            ? null
+            : () => provider.loadCurrentLocationWeather(),
+      ),
+      IconButton(
+        icon: Icon(
+          Icons.refresh,
+          color: Colors.white.withValues(alpha: 0.84),
+        ),
+        onPressed: provider.isBusy ? null : () => provider.refreshWeather(),
+      ),
+    ];
+  }
+
+  List<Widget> _buildAppBarSearch(WeatherProvider provider) {
+    return [
+      Expanded(
+        child: TextField(
+          controller: _searchController,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: '搜索城市并添加到首页...',
+            hintStyle: TextStyle(
+              color: Colors.white.withValues(alpha: 0.62),
             ),
-            IconButton(
-              icon: const Icon(Icons.my_location, color: Colors.white),
-              onPressed: provider.isBusy
-                  ? null
-                  : () => provider.loadCurrentLocationWeather(),
+            prefixIcon: Icon(
+              Icons.search,
+              color: Colors.white.withValues(alpha: 0.84),
             ),
-            IconButton(
-              icon: Icon(
-                Icons.refresh,
-                color: Colors.white.withValues(alpha: 0.84),
-              ),
-              onPressed:
-                  provider.isBusy ? null : () => provider.refreshWeather(),
-            ),
-          ] else ...[
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: '搜索城市并添加到首页...',
-                  hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.62),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _searchController,
+              builder: (context, value, _) {
+                if (value.text.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return IconButton(
+                  icon: Icon(
+                    Icons.clear,
                     color: Colors.white.withValues(alpha: 0.84),
                   ),
-                  suffixIcon: _searchController.text.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: Colors.white.withValues(alpha: 0.84),
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            provider.clearSearchResults();
-                            setState(() {});
-                          },
-                        ),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.44),
-                    ),
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                  provider.debounceSearch(value);
-                },
+                  onPressed: () {
+                    _searchController.clear();
+                    provider.clearSearchResults();
+                  },
+                );
+              },
+            ),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.2),
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => _closeSearch(provider),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
             ),
-          ],
-        ],
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.44),
+              ),
+            ),
+          ),
+          onChanged: provider.debounceSearch,
+        ),
       ),
-    );
+      const SizedBox(width: 8),
+      IconButton(
+        icon: const Icon(Icons.close, color: Colors.white),
+        onPressed: () => _closeSearch(provider),
+      ),
+    ];
   }
 
   Widget _buildSectionHeader(
@@ -416,16 +427,25 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   }
 
   Widget _buildSearchResults(WeatherProvider provider) {
-    final shouldShowPanel = _showSearch &&
-        (_searchController.text.trim().isNotEmpty ||
-            provider.isSearchPending ||
-            provider.isSearching ||
-            provider.searchResults.isNotEmpty);
+    return ValueListenableBuilder<bool>(
+      valueListenable: _showSearch,
+      builder: (context, showSearch, _) {
+        final shouldShowPanel = showSearch &&
+            (_searchController.text.trim().isNotEmpty ||
+                provider.isSearchPending ||
+                provider.isSearching ||
+                provider.searchResults.isNotEmpty);
 
-    if (!shouldShowPanel) {
-      return const SizedBox.shrink();
-    }
+        if (!shouldShowPanel) {
+          return const SizedBox.shrink();
+        }
 
+        return _buildSearchResultsPanel(provider);
+      },
+    );
+  }
+
+  Widget _buildSearchResultsPanel(WeatherProvider provider) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -451,44 +471,14 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
               : Column(
                   children: [
                     for (final result in provider.searchResults)
-                      Builder(
-                        builder: (context) {
-                          final isSaved = provider.hasSavedCity(result);
-
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            leading: Icon(
-                              isSaved
-                                  ? Icons.bookmark_added_rounded
-                                  : Icons.location_on,
-                              color: isSaved ? Colors.green : Colors.blue,
-                            ),
-                            title: Text(
-                              result.displayName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              isSaved
-                                  ? '已保存，点击后会刷新并置顶'
-                                  : (result.country ?? ''),
-                            ),
-                            trailing: Icon(
-                              isSaved
-                                  ? Icons.refresh_rounded
-                                  : Icons.add_circle_outline,
-                              color: isSaved ? Colors.green : Colors.black54,
-                            ),
-                            onTap: provider.isBusy
-                                ? null
-                                : () => _handleSearchSelect(provider, result),
-                          );
-                        },
+                      _SearchResultTile(
+                        key: ValueKey(
+                          'search-result-${SavedCityWeather.buildId(result)}',
+                        ),
+                        result: result,
+                        isSaved: provider.hasSavedCity(result),
+                        isBusy: provider.isBusy,
+                        onTap: () => _handleSearchSelect(provider, result),
                       ),
                   ],
                 ),
@@ -732,6 +722,44 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _SearchResultTile extends StatelessWidget {
+  const _SearchResultTile({
+    super.key,
+    required this.result,
+    required this.isSaved,
+    required this.isBusy,
+    required this.onTap,
+  });
+
+  final CitySearchResult result;
+  final bool isSaved;
+  final bool isBusy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Icon(
+        isSaved ? Icons.bookmark_added_rounded : Icons.location_on,
+        color: isSaved ? Colors.green : Colors.blue,
+      ),
+      title: Text(
+        result.displayName,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        isSaved ? '已保存，点击后会刷新并置顶' : (result.country ?? ''),
+      ),
+      trailing: Icon(
+        isSaved ? Icons.refresh_rounded : Icons.add_circle_outline,
+        color: isSaved ? Colors.green : Colors.black54,
+      ),
+      onTap: isBusy ? null : onTap,
     );
   }
 }

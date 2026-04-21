@@ -48,6 +48,21 @@ class WeatherProvider extends ChangeNotifier {
   Timer? _searchDebounceTimer;
   int _searchRequestId = 0;
 
+  List<SavedCityWeather>? _savedCitiesView;
+  List<CitySearchResult>? _searchResultsView;
+  SavedCityWeather? _expandedCityCache;
+  String? _expandedCityCacheForId;
+
+  void _invalidateSavedCityCaches() {
+    _savedCitiesView = null;
+    _expandedCityCacheForId = null;
+    _expandedCityCache = null;
+  }
+
+  void _invalidateSearchResultsCache() {
+    _searchResultsView = null;
+  }
+
   WeatherData? get weatherData =>
       _currentLocationWeather ??
       expandedCity?.weatherData ??
@@ -58,7 +73,8 @@ class WeatherProvider extends ChangeNotifier {
   bool get isRefreshing => _isRefreshing;
   bool get isBusy => _isLoading || _isRefreshing;
   String? get errorMessage => _errorMessage;
-  List<CitySearchResult> get searchResults => List.unmodifiable(_searchResults);
+  List<CitySearchResult> get searchResults =>
+      _searchResultsView ??= List.unmodifiable(_searchResults);
   bool get isSearching => _isSearching;
   bool get isSearchPending => _isSearchPending;
   bool get hasCompletedSearch => _hasCompletedSearch;
@@ -67,28 +83,49 @@ class WeatherProvider extends ChangeNotifier {
   bool get isUsingCurrentLocation => _currentLocationWeather != null;
   DateTime? get lastUpdated => _lastUpdated;
   TemperatureUnit get temperatureUnit => _temperatureUnit;
-  bool get isCacheExpired =>
-      hasData &&
-      (_lastUpdated == null ||
-          DateTime.now().difference(_lastUpdated!) > _cacheRefreshInterval);
+  bool get isCacheExpired {
+    if (!hasData) {
+      return false;
+    }
+    final now = DateTime.now();
+    if (_currentLocationWeather != null) {
+      if (_lastUpdated == null ||
+          now.difference(_lastUpdated!) > _cacheRefreshInterval) {
+        return true;
+      }
+    }
+    for (final city in _savedCities) {
+      if (now.difference(city.updatedAt) > _cacheRefreshInterval) {
+        return true;
+      }
+    }
+    return false;
+  }
   bool get hasData =>
       _currentLocationWeather != null || _savedCities.isNotEmpty;
   bool get hasError => _errorMessage != null;
-  List<SavedCityWeather> get savedCities => List.unmodifiable(_savedCities);
+  List<SavedCityWeather> get savedCities =>
+      _savedCitiesView ??= List.unmodifiable(_savedCities);
   String? get expandedCityId => _expandedCityId;
 
   SavedCityWeather? get expandedCity {
-    if (_expandedCityId == null) {
+    final id = _expandedCityId;
+    if (id == null) {
       return null;
     }
-
+    if (_expandedCityCacheForId == id) {
+      return _expandedCityCache;
+    }
+    SavedCityWeather? found;
     for (final city in _savedCities) {
-      if (city.id == _expandedCityId) {
-        return city;
+      if (city.id == id) {
+        found = city;
+        break;
       }
     }
-
-    return null;
+    _expandedCityCache = found;
+    _expandedCityCacheForId = id;
+    return found;
   }
 
   Future<SavedCityWeather> _refreshSavedCity(
@@ -126,10 +163,10 @@ class WeatherProvider extends ChangeNotifier {
     }
   }
 
-  int get _firstUnpinnedIndex =>
-      _savedCities.indexWhere((item) => !item.isPinned) == -1
-          ? _savedCities.length
-          : _savedCities.indexWhere((item) => !item.isPinned);
+  int get _firstUnpinnedIndex {
+    final index = _savedCities.indexWhere((item) => !item.isPinned);
+    return index == -1 ? _savedCities.length : index;
+  }
 
   void _upsertSavedCity(
     SavedCityWeather cityWeather, {
@@ -155,6 +192,7 @@ class WeatherProvider extends ChangeNotifier {
     }
     _normalizeSavedCityOrder();
     _expandedCityId = cityWeather.id;
+    _invalidateSavedCityCaches();
   }
 
   void _persistState() {
@@ -188,6 +226,7 @@ class WeatherProvider extends ChangeNotifier {
       ..addAll(cachedState.savedCities);
     _sortSavedCities();
     _normalizeSavedCityOrder();
+    _invalidateSavedCityCaches();
     _expandedCityId = cachedState.expandedCityId;
     _lastUpdated = cachedState.lastUpdated;
     _temperatureUnit = cachedState.temperatureUnit;
@@ -367,6 +406,7 @@ class WeatherProvider extends ChangeNotifier {
         ),
       );
       _searchResults = [];
+    _invalidateSearchResultsCache();
       _currentQuery = '';
       _isSearching = false;
       _isSearchPending = false;
@@ -425,9 +465,10 @@ class WeatherProvider extends ChangeNotifier {
     _savedCities.insert(insertIndex, updatedCity);
     _normalizeSavedCityOrder();
     _expandedCityId = cityId;
+    _invalidateSavedCityCaches();
     _persistState();
     notifyListeners();
-    return _savedCities.firstWhere((item) => item.id == cityId).isPinned;
+    return updatedCity.isPinned;
   }
 
   bool reorderSavedCities(int oldIndex, int newIndex) {
@@ -451,6 +492,7 @@ class WeatherProvider extends ChangeNotifier {
     final item = _savedCities.removeAt(oldIndex);
     _savedCities.insert(newIndex, item);
     _normalizeSavedCityOrder();
+    _invalidateSavedCityCaches();
     _persistState();
     notifyListeners();
     return true;
@@ -471,6 +513,7 @@ class WeatherProvider extends ChangeNotifier {
     if (!hasData) {
       _lastUpdated = null;
     }
+    _invalidateSavedCityCaches();
     _persistState();
     notifyListeners();
     return true;
@@ -491,6 +534,7 @@ class WeatherProvider extends ChangeNotifier {
     if (!hasData) {
       _lastUpdated = null;
     }
+    _invalidateSavedCityCaches();
     _persistState();
     notifyListeners();
     return removedCity;
@@ -539,8 +583,7 @@ class WeatherProvider extends ChangeNotifier {
       _savedCities
         ..clear()
         ..addAll(refreshedCities);
-      _sortSavedCities();
-      _normalizeSavedCityOrder();
+      _invalidateSavedCityCaches();
 
       if (currentLocationError != null) {
         _errorMessage = _mapErrorToMessage(currentLocationError!);
@@ -559,6 +602,7 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> searchCity(String keyword) async {
     final requestId = ++_searchRequestId;
     _searchResults = [];
+    _invalidateSearchResultsCache();
 
     if (keyword.trim().isEmpty) {
       _currentQuery = '';
@@ -581,9 +625,11 @@ class WeatherProvider extends ChangeNotifier {
         return;
       }
       _searchResults = results;
+      _invalidateSearchResultsCache();
     } catch (_) {
       if (requestId == _searchRequestId) {
         _searchResults = [];
+        _invalidateSearchResultsCache();
       }
     } finally {
       if (requestId == _searchRequestId) {
@@ -601,6 +647,7 @@ class WeatherProvider extends ChangeNotifier {
     if (keyword.trim().isEmpty) {
       _searchRequestId++;
       _searchResults = [];
+      _invalidateSearchResultsCache();
       _isSearching = false;
       _isSearchPending = false;
       _hasCompletedSearch = false;
@@ -610,6 +657,7 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     _searchResults = [];
+    _invalidateSearchResultsCache();
     _isSearching = false;
     _isSearchPending = true;
     _hasCompletedSearch = false;
@@ -625,6 +673,7 @@ class WeatherProvider extends ChangeNotifier {
     _searchDebounceTimer?.cancel();
     _searchRequestId++;
     _searchResults = [];
+    _invalidateSearchResultsCache();
     _isSearching = false;
     _isSearchPending = false;
     _hasCompletedSearch = false;
@@ -642,6 +691,7 @@ class WeatherProvider extends ChangeNotifier {
   @override
   void dispose() {
     _searchDebounceTimer?.cancel();
+    _searchRequestId++;
     _repository.dispose();
     super.dispose();
   }

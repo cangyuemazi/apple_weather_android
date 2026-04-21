@@ -71,3 +71,12 @@ app.*.map.json
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Local Gradle wrapper & build artifacts
+.gradle-home/
+android/.gradle/
+android/build/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/gradle.properties

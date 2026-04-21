@@ -1,6 +1,6 @@
 library weather_repository;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 
 import '../models/city_search_result.dart';
 import '../models/saved_city_weather.dart';
@@ -70,7 +70,8 @@ class WeatherRepository {
     try {
       final airQuality = await airQualityFuture;
       return weatherData.copyWith(airQuality: airQuality);
-    } catch (_) {
+    } catch (error) {
+      debugPrint('WeatherRepository: air quality fetch failed - $error');
       return weatherData;
     }
   }
